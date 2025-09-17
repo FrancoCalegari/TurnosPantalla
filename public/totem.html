@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tótem de Turnos</title>
+</head>
+<body>
+  <h1>Sacar Turno</h1>
+  <button onclick="nuevo('con-turno')">Con Turno</button>
+  <button onclick="nuevo('sin-turno')">Sin Turno</button>
+
+  <p>Tu número es: <span id="ticket">--</span></p>
+
+  <script>
+    async function nuevo(tipo) {
+      const res = await fetch("/nuevo-turno", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo })
+      });
+      const data = await res.json();
+      document.getElementById("ticket").textContent = data.numero;
+
+      // acá podrías disparar impresión automática
+      window.print();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "proyectopantalla",
+  "version": "1.0.0",
+  "description": "es un proyecto para poder mostrar turnos en una pantalla y cargarlos desde otro lado",
+  "main": "app.js",
+  "scripts": {
+    "test": "dev",
+    "start": "node app.js"
+  },
+  "author": "Franco Calegari",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  }
+}

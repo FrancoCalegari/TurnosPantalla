@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Display de Turnos</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <img src="logo.png" alt="Logo" class="logo-img">
+      <h1>Clínica Demo</h1>
+    </div>
+    <div class="hora" id="hora"></div>
+    <div class="clima" id="clima">Clima: Cargando...</div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="contenedor">
+    <section class="panel panel-izq">
+      <h2>Turnos en curso</h2>
+      <ul id="historial"></ul>
+    </section>
+
+    <section class="panel panel-der">
+      <h2>Turno actual</h2>
+      <div id="turno-actual" class="turno-actual">---</div>
+      <audio id="notificacion" src="sounds/notificacion.mp3"></audio>
+
+      <h2>Próximos turnos</h2>
+      <ul id="siguientes"></ul>
+    </section>
+  </main>
+
+  <script>
+    const socket = io();
+
+    const turnoActualEl = document.getElementById("turno-actual");
+    const siguientesEl = document.getElementById("siguientes");
+    const historialEl = document.getElementById("historial");
+    const notificacion = document.getElementById("notificacion");
+
+    // Actualizar hora en vivo
+    function actualizarHora() {
+      const ahora = new Date();
+      document.getElementById("hora").innerText = ahora.toLocaleTimeString();
+    }
+    setInterval(actualizarHora, 1000);
+    actualizarHora();
+
+    // Obtener clima (ejemplo usando OpenWeather, cambia la API_KEY por la tuya)
+    async function obtenerClima() {
+      try {
+        const res = await fetch("https://api.openweathermap.org/data/2.5/weather?q=Buenos Aires,AR&units=metric&appid=API_KEY&lang=es");
+        const data = await res.json();
+        document.getElementById("clima").innerText = `Clima: ${data.main.temp}°C, ${data.weather[0].description}`;
+      } catch {
+        document.getElementById("clima").innerText = "Clima: No disponible";
+      }
+    }
+    obtenerClima();
+    setInterval(obtenerClima, 600000); // cada 10 min
+
+    // Refrescar cada segundo
+    setInterval(async () => {
+      const resActual = await fetch("/turno-actual");
+      const turno = await resActual.json();
+      if (turno && turno.numero) {
+        const displayNum = turno.tipo === "sin-turno" ? `ST-${turno.numero}` : `T-${turno.numero}`;
+        if (turnoActualEl.innerText !== displayNum) {
+          turnoActualEl.innerText = displayNum;
+          notificacion.play(); // sonido al cambiar
+        }
+      }
+
+      const resHist = await fetch("/historial");
+      const historial = await resHist.json();
+      historialEl.innerHTML = historial.map(t => 
+        `<li>${t.tipo === "sin-turno" ? `ST-${t.numero}` : `T-${t.numero}`}</li>`
+      ).join("");
+
+      const resTodos = await fetch("/turnos"); // agregamos endpoint opcional
+      const todos = await resTodos.json();
+      siguientesEl.innerHTML = todos.slice(0, 5).map(t => 
+        `<li>${t.tipo === "sin-turno" ? `ST-${t.numero}` : `T-${t.numero}`}</li>`
+      ).join("");
+    }, 1000);
+  </script>
+</body>
+</html>
