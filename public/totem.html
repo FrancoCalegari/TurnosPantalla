@@ -3,6 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <title>Tótem de Turnos</title>
+  <style>
+    @page {
+      size: 80mm auto; /* ancho fijo 80mm, largo dinámico */
+      margin: 5mm;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #0077cc;
+    }
+
+    button {
+      margin: 10px;
+      padding: 15px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background: #0077cc;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #005fa3;
+    }
+
+    #ticket {
+      font-weight: bold;
+      font-size: 24px;
+      color: #333;
+    }
+
+    /* ESTILO PARA IMPRESIÓN */
+    @media print {
+      body {
+        background: white;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+      }
+
+      h1, button, p {
+        display: none; /* ocultar todo menos el ticket */
+      }
+
+      #print-ticket {
+        display: block;
+        margin: 20px auto;
+        font-family: "Courier New", monospace;
+        text-align: center;
+      }
+
+      #clinic-name {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      #ticket-number {
+        font-size: 36px;
+        font-weight: bold;
+        margin: 10px 0;
+      }
+
+      #ticket-type {
+        font-size: 18px;
+        margin-top: 10px;
+      }
+    }
+  </style>
 </head>
 <body>
   <h1>Sacar Turno</h1>
@@ -10,6 +88,16 @@
   <button onclick="nuevo('sin-turno')">Sin Turno</button>
 
   <p>Tu número es: <span id="ticket">--</span></p>
+
+  <!-- Contenido que se imprimirá -->
+  <div id="print-ticket" style="display:none;     @page {
+      size: 80mm auto; /* ancho fijo 80mm, largo dinámico */
+      margin: 5mm;
+    }">
+    <div id="clinic-name">Clínica Demo</div>
+    <div id="ticket-number">ST-000</div>
+    <div id="ticket-type">--</div>
+  </div>
 
   <script>
     async function nuevo(tipo) {
@@ -19,10 +107,23 @@
         body: JSON.stringify({ tipo })
       });
       const data = await res.json();
+
+      // Mostrar en pantalla
       document.getElementById("ticket").textContent = data.numero;
 
-      // acá podrías disparar impresión automática
+      // Preparar para imprimir
+      document.getElementById("ticket-number").textContent = data.numero;
+      document.getElementById("ticket-type").textContent =
+        tipo === "con-turno" ? "Con Turno" : "Sin Turno";
+
+      // Mostrar el div oculto solo para impresión
+      document.getElementById("print-ticket").style.display = "block";
+
+      // Lanzar impresión
       window.print();
+
+      // Ocultar después de imprimir
+      document.getElementById("print-ticket").style.display = "none";
     }
   </script>
 </body>

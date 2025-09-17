@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <title>Display de Turnos</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="display.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
   <!-- HEADER -->
   <header class="header">
-    <div class="logo">
-      <img src="logo.png" alt="Logo" class="logo-img">
-      <h1>Clínica Demo</h1>
-    </div>
+
     <div class="hora" id="hora"></div>
+    <div class="logo">
+      <img src="./Clinica Demo.png" alt="Logo" class="logo-img">
+    </div>
     <div class="clima" id="clima">Clima: Cargando...</div>
   </header>
 
@@ -51,24 +51,54 @@ window.addEventListener("DOMContentLoaded", () => {
 // Actualizar hora en vivo
 function actualizarHora() {
   const ahora = new Date();
-  document.getElementById("hora").innerText = ahora.toLocaleTimeString();
+  document.getElementById("hora").innerText = ahora.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
 setInterval(actualizarHora, 1000);
 actualizarHora();
 
-// Obtener clima
+
+// Obtener clima desde Google Weather API
+// Obtener clima desde Google Weather API
 async function obtenerClima() {
+  const apiKey = "TuApiKeyActivada"; // 🔑 Reemplaza con tu clave
+  const lat = -34.6037; // Ejemplo: Buenos Aires
+  const lon = -58.3816;
+
+  const url = `https://weather.googleapis.com/v1/forecast/days:lookup?key=${apiKey}&location.latitude=${lat}&location.longitude=${lon}&days=1`;
+
   try {
-    const res = await fetch("https://api.openweathermap.org/data/2.5/weather?q=Buenos Aires,AR&units=metric&appid=API_KEY&lang=es");
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Error en la API");
     const data = await res.json();
-    document.getElementById("clima").innerText =
-      `Clima: ${data.main.temp}°C, ${data.weather[0].description}`;
-  } catch {
+
+    // Extraer el pronóstico de hoy
+    const hoy = data.forecastDays?.[0];
+    if (hoy) {
+      const min = hoy.minTemperature?.degrees ?? "--";
+      const max = hoy.maxTemperature?.degrees ?? "--";
+      const descripcion =
+        hoy.daytimeForecast?.weatherCondition?.description?.text ??
+        hoy.nighttimeForecast?.weatherCondition?.description?.text ??
+        "Sin datos";
+
+      document.getElementById("clima").innerText =
+        `Clima: ${min}°C - ${max}°C, ${descripcion}`;
+    } else {
+      document.getElementById("clima").innerText = "Clima: No disponible";
+    }
+  } catch (e) {
+    console.error("Error obteniendo clima:", e);
     document.getElementById("clima").innerText = "Clima: No disponible";
   }
 }
+
+// Llamar al cargar y actualizar cada 10 minutos
 obtenerClima();
 setInterval(obtenerClima, 600000);
+
 
 // Refrescar cada segundo
 setInterval(async () => {
