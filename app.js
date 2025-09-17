@@ -59,10 +59,10 @@ app.get("/turno-actual", (req, res) => {
   res.json(turnoActual || {});
 });
 
+// CRUD extra
 app.get("/turnos", (req, res) => {
-  res.json(turnos); // ahora es un array
+  res.json({ turnoActual, turnos });
 });
-
 
 // Crear turno manual (desde panel CRUD)
 app.post("/turnos", (req, res) => {
