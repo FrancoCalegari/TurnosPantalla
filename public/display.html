@@ -129,7 +129,7 @@ setInterval(async () => {
   siguientesEl.innerHTML = todos.turnos.slice(0, 5).map(t =>
     `<li>${t.tipo === "sin-turno" ? `${t.numero}` : `${t.numero}`}</li>`
   ).join("");
-}, 1000);
+}, 3000);
 
 
 function habilitarSonido() {
@@ -139,10 +139,6 @@ function habilitarSonido() {
 }
 document.addEventListener("click", habilitarSonido);
 document.addEventListener("keydown", habilitarSonido);
-
-
-
-
   </script>
 </body>
 </html>
