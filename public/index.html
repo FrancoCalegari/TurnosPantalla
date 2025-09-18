@@ -4,8 +4,27 @@
   <meta charset="UTF-8">
   <title>Home - Sistema de Turnos</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 10%; }
-    h1 { margin-bottom: 40px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background: #f4f8fc;
+      color: #333;
+    }
+    header {
+      padding: 40px 20px 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #0077cc;
+    }
+    p {
+      max-width: 600px;
+      margin: 0 auto 10px;
+      font-size: 1.1rem;
+      line-height: 1.5;
+    }
     a {
       display: inline-block;
       margin: 15px;
@@ -15,14 +34,47 @@
       text-decoration: none;
       font-size: 18px;
       border-radius: 8px;
+      transition: background 0.3s ease;
     }
-    a:hover { background: #005fa3; }
+    a:hover {
+      background: #005fa3;
+    }
+    footer {
+      margin-top: 1rem;
+      padding: 20px;
+      background: #eef5ff;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    footer img {
+      width: 5vw;
+      vertical-align: middle;
+      border-radius: 50%;
+      transition: transform 0.3s ease;
+    }
+    footer img:hover {
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
-  <h1>Bienvenido al Sistema de Turnos</h1>
-  <a href="/display.html" target="_blank">📺 Pantalla de Turnos</a>
-  <a href="/panel.html" target="_blank">🛠️ Panel de Administración</a>
-  <a href="/totem.html" target="_blank">🎟️ Tótem de Turnos</a>
+  <header>
+    <h1>Bienvenido al Sistema de Turnos Demo</h1>
+    <p>
+      Este es un sistema de <strong>gestión de turnos de demostración</strong> que incluye:
+      un panel de administración, una pantalla de turnos y un tótem para generar tickets.
+      El objetivo es mostrar cómo funcionaría un sistema real en una clínica o empresa.
+    </p>
+    <a href="/display.html" target="_blank">📺 Pantalla de Turnos</a>
+    <a href="/panel.html" target="_blank">🛠️ Panel de Administración</a>
+    <a href="/totem.html" target="_blank">🎟️ Tótem de Turnos</a>
+  </header>
+
+  <footer>
+    <p>&copy; 2025 Creado por Franco Calegari</p>
+    <a href="https://francocalegari.github.io/PortfolioFrancoCalegari/" target="_blank">
+      <img src="./assets/img/logoweb.png" alt="Logo de Franco Calegari">
+    </a>
+  </footer>
 </body>
 </html>
