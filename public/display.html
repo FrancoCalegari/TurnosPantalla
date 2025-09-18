@@ -4,12 +4,10 @@
   <meta charset="UTF-8">
   <title>Display de Turnos</title>
   <link rel="stylesheet" href="display.css">
-  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
   <!-- HEADER -->
   <header class="header">
-
     <div class="hora" id="hora"></div>
     <div class="logo">
       <img src="./Clinica Demo.png" alt="Logo" class="logo-img">
@@ -35,8 +33,6 @@
   </main>
 
   <script>
-const socket = io();
-
 const turnoActualEl = document.getElementById("turno-actual");
 const siguientesEl = document.getElementById("siguientes");
 const historialEl = document.getElementById("historial");
@@ -104,7 +100,6 @@ setInterval(async () => {
     const resActual = await fetch("/turno-actual");
     const turno = await resActual.json();
     if (JSON.stringify(turno) !== JSON.stringify(cache.turnoActual)) {
-      // Cambió
       if (cache.turnoActual && turno.numero !== cache.turnoActual.numero) {
         notificacion.play().catch(()=>{});
       }
@@ -143,6 +138,6 @@ function habilitarSonido() {
 }
 document.addEventListener("click", habilitarSonido);
 document.addEventListener("keydown", habilitarSonido);
-</script>
+  </script>
 </body>
 </html>

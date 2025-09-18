@@ -1,11 +1,7 @@
 const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
 const path = require("path");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
 
 let turnos = [];
 let turnoActual = null;
@@ -18,9 +14,8 @@ app.use(express.json());
 
 // Crear un nuevo turno (tótem o manual)
 app.post("/nuevo-turno", (req, res) => {
-  const { tipo } = req.body; // "con-turno" o "sin-turno"
+  const { tipo } = req.body;
   contador++;
-
   let prefijo = tipo === "sin-turno" ? "ST-" : "T-";
   const nuevo = {
     id: contador,
@@ -28,23 +23,17 @@ app.post("/nuevo-turno", (req, res) => {
     tipo,
     atendido: false,
   };
-
   turnos.push(nuevo);
   res.json(nuevo);
-
-  io.emit("nuevo-turno", nuevo);
 });
 
-/// Avanzar al siguiente turno
+// Avanzar al siguiente turno
 app.post("/avanzar", (req, res) => {
   if (turnos.length === 0) return res.json({ msg: "No hay turnos" });
 
-  if (turnoActual) historial.unshift(turnoActual); // guardar turno actual en historial
+  if (turnoActual) historial.unshift(turnoActual);
   turnoActual = turnos.shift();
   turnoActual.atendido = true;
-
-  io.emit("turno-actual", turnoActual);
-  io.emit("historial", historial.slice(0, 5)); // enviar últimos 5 turnos
 
   res.json(turnoActual);
 });
@@ -59,48 +48,39 @@ app.get("/turno-actual", (req, res) => {
   res.json(turnoActual || {});
 });
 
-// CRUD extra
+// CRUD de turnos
 app.get("/turnos", (req, res) => {
   res.json({ turnoActual, turnos });
 });
 
-// Crear turno manual (desde panel CRUD)
 app.post("/turnos", (req, res) => {
   const { tipo } = req.body;
   contador++;
   let prefijo = tipo === "sin-turno" ? "ST-" : "T-";
-
   const nuevo = {
     id: contador,
     numero: prefijo + contador,
     tipo: tipo || "manual",
     atendido: false,
   };
-
   turnos.push(nuevo);
-  io.emit("nuevo-turno", nuevo);
   res.json(nuevo);
 });
 
-// Editar turno
 app.put("/turnos/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const { numero, tipo } = req.body;
   const turno = turnos.find((t) => t.id === id);
   if (!turno) return res.status(404).json({ msg: "Turno no encontrado" });
-
   if (numero) turno.numero = numero;
   if (tipo) turno.tipo = tipo;
-
   res.json(turno);
 });
 
-// Eliminar turno
 app.delete("/turnos/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const index = turnos.findIndex((t) => t.id === id);
   if (index === -1) return res.status(404).json({ msg: "Turno no encontrado" });
-
   const eliminado = turnos.splice(index, 1)[0];
   res.json(eliminado);
 });
@@ -110,13 +90,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Socket.IO conexión
-io.on("connection", (socket) => {
-  console.log("Cliente conectado");
-  if (turnoActual) socket.emit("turno-actual", turnoActual);
-});
-
 const PORT = 3000;
-server.listen(PORT, () =>
+app.listen(PORT, () =>
   console.log(`Servidor corriendo en http://localhost:${PORT}`)
 );
