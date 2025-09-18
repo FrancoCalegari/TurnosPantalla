@@ -35,20 +35,26 @@
   </main>
 
   <script>
-
- const socket = io();
+const socket = io();
 
 const turnoActualEl = document.getElementById("turno-actual");
 const siguientesEl = document.getElementById("siguientes");
 const historialEl = document.getElementById("historial");
 const notificacion = document.getElementById("notificacion");
 
-// Reproducir sonido al cargar el DOM (precarga)
+// Precarga del audio
 window.addEventListener("DOMContentLoaded", () => {
   notificacion.load();
 });
 
-// Actualizar hora en vivo
+// Cache en memoria
+let cache = {
+  turnoActual: null,
+  historial: [],
+  turnos: []
+};
+
+// Actualizar hora
 function actualizarHora() {
   const ahora = new Date();
   document.getElementById("hora").innerText = ahora.toLocaleTimeString([], {
@@ -59,14 +65,11 @@ function actualizarHora() {
 setInterval(actualizarHora, 1000);
 actualizarHora();
 
-
-// Obtener clima desde Google Weather API
-// Obtener clima desde Google Weather API
+// Obtener clima
 async function obtenerClima() {
-  const apiKey = "TuApiKeyActivada"; // 🔑 Reemplaza con tu clave
-  const lat = -34.6037; // Ejemplo: Buenos Aires
+  const apiKey = "TuApiKeyActivada"; // 🔑
+  const lat = -34.6037;
   const lon = -58.3816;
-
   const url = `https://weather.googleapis.com/v1/forecast/days:lookup?key=${apiKey}&location.latitude=${lat}&location.longitude=${lon}&days=1`;
 
   try {
@@ -74,7 +77,6 @@ async function obtenerClima() {
     if (!res.ok) throw new Error("Error en la API");
     const data = await res.json();
 
-    // Extraer el pronóstico de hoy
     const hoy = data.forecastDays?.[0];
     if (hoy) {
       const min = hoy.minTemperature?.degrees ?? "--";
@@ -86,52 +88,54 @@ async function obtenerClima() {
 
       document.getElementById("clima").innerText =
         `Clima: ${min}°C - ${max}°C, ${descripcion}`;
-    } else {
-      document.getElementById("clima").innerText = "Clima: No disponible";
     }
   } catch (e) {
     console.error("Error obteniendo clima:", e);
     document.getElementById("clima").innerText = "Clima: No disponible";
   }
 }
-
-// Llamar al cargar y actualizar cada 10 minutos
 obtenerClima();
 setInterval(obtenerClima, 600000);
 
-
-// Refrescar cada segundo
+// Refrescar con cache
 setInterval(async () => {
-  // Turno actual
-  const resActual = await fetch("/turno-actual");
-  const turno = await resActual.json();
-  if (turno && turno.numero) {
-    const displayNum = turno.tipo === "sin-turno"
-      ? `${turno.numero}`
-      : `${turno.numero}`;
-    if (turnoActualEl.dataset.num !== String(turno.numero)) {
-      notificacion.play();
+  try {
+    // Turno actual
+    const resActual = await fetch("/turno-actual");
+    const turno = await resActual.json();
+    if (JSON.stringify(turno) !== JSON.stringify(cache.turnoActual)) {
+      // Cambió
+      if (cache.turnoActual && turno.numero !== cache.turnoActual.numero) {
+        notificacion.play().catch(()=>{});
+      }
+      turnoActualEl.innerText = turno?.numero ?? "---";
+      turnoActualEl.dataset.num = turno?.numero ?? "";
+      cache.turnoActual = turno;
     }
-    turnoActualEl.innerText = displayNum;
-    turnoActualEl.dataset.num = turno.numero;
+
+    // Historial
+    const resHist = await fetch("/historial");
+    const historial = await resHist.json();
+    if (JSON.stringify(historial) !== JSON.stringify(cache.historial)) {
+      historialEl.innerHTML = historial.map(t =>
+        `<li>${t.numero}</li>`).join("");
+      cache.historial = historial;
+    }
+
+    // Próximos turnos
+    const resTodos = await fetch("/turnos");
+    const todos = await resTodos.json();
+    if (JSON.stringify(todos.turnos) !== JSON.stringify(cache.turnos)) {
+      siguientesEl.innerHTML = todos.turnos.slice(0, 5).map(t =>
+        `<li>${t.numero}</li>`).join("");
+      cache.turnos = todos.turnos;
+    }
+  } catch (err) {
+    console.error("Error actualizando turnos:", err);
   }
-
-  // Historial
-  const resHist = await fetch("/historial");
-  const historial = await resHist.json();
-  historialEl.innerHTML = historial.map(t =>
-    `<li>${t.tipo === "sin-turno" ? `${t.numero}` : `${t.numero}`}</li>`
-  ).join("");
-
-  // Próximos turnos (cola)
-  const resTodos = await fetch("/turnos");
-  const todos = await resTodos.json();
-  siguientesEl.innerHTML = todos.turnos.slice(0, 5).map(t =>
-    `<li>${t.tipo === "sin-turno" ? `${t.numero}` : `${t.numero}`}</li>`
-  ).join("");
 }, 3000);
 
-
+// Habilitar sonido tras interacción
 function habilitarSonido() {
   notificacion.play().catch(()=>{});
   document.removeEventListener("click", habilitarSonido);
@@ -139,6 +143,6 @@ function habilitarSonido() {
 }
 document.addEventListener("click", habilitarSonido);
 document.addEventListener("keydown", habilitarSonido);
-  </script>
+</script>
 </body>
 </html>

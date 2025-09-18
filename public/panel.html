@@ -31,47 +31,63 @@
     <button onclick="avanzar()">➡ Avanzar turno</button>
   </div>
 
-  <script>
-    async function avanzar() {
-      const res = await fetch("/avanzar", { method: "POST" });
-      const data = await res.json();
-      document.getElementById("actual").textContent = data.numero || "--";
-      cargarTurnos();
-    }
+ <script>
+  let cacheTurnos = { turnoActual: null, turnos: [] };
 
-    async function crearTurno(e) {
-      e.preventDefault();
-      const tipo = document.getElementById("tipo").value;
-      await fetch("/turnos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipo })
-      });
-      cargarTurnos();
-    }
+  async function avanzar() {
+    const res = await fetch("/avanzar", { method: "POST" });
+    const data = await res.json();
+    document.getElementById("actual").textContent = data.numero || "--";
+    await cargarTurnos(true); // forzamos actualización
+  }
 
-    async function eliminar(id) {
-      await fetch("/turnos/" + id, { method: "DELETE" });
-      cargarTurnos();
-    }
+  async function crearTurno(e) {
+    e.preventDefault();
+    const tipo = document.getElementById("tipo").value;
+    await fetch("/turnos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tipo })
+    });
+    await cargarTurnos(true); // forzamos actualización
+  }
 
-    async function editar(id) {
-      const nuevoTipo = prompt("Nuevo tipo (con-turno/sin-turno):");
-      if (!nuevoTipo) return;
-      await fetch("/turnos/" + id, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipo: nuevoTipo })
-      });
-      cargarTurnos();
-    }
+  async function eliminar(id) {
+    await fetch("/turnos/" + id, { method: "DELETE" });
+    await cargarTurnos(true); // forzamos actualización
+  }
 
-    async function cargarTurnos() {
+  async function editar(id) {
+    const nuevoTipo = prompt("Nuevo tipo (con-turno/sin-turno):");
+    if (!nuevoTipo) return;
+    await fetch("/turnos/" + id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tipo: nuevoTipo })
+    });
+    await cargarTurnos(true); // forzamos actualización
+  }
+
+  async function cargarTurnos(force = false) {
+    try {
       const res = await fetch("/turnos");
       const data = await res.json();
+
+      // Si no hay cambios y no es forzado, usamos cache
+      if (!force &&
+          JSON.stringify(data.turnoActual) === JSON.stringify(cacheTurnos.turnoActual) &&
+          JSON.stringify(data.turnos) === JSON.stringify(cacheTurnos.turnos)) {
+        return; // nada que actualizar
+      }
+
+      // Actualizamos cache
+      cacheTurnos = data;
+
+      // Render turno actual
       document.getElementById("actual").textContent =
         data.turnoActual ? data.turnoActual.numero : "--";
 
+      // Render tabla
       const tbody = document.querySelector("#tablaTurnos tbody");
       tbody.innerHTML = "";
       data.turnos.forEach(t => {
@@ -86,12 +102,16 @@
             </td>
           </tr>`;
       });
+    } catch (e) {
+      console.error("Error cargando turnos:", e);
     }
+  }
 
-    // Refrescar cada 1s
-    setInterval(cargarTurnos, 2000);
+  // Refrescar cada 2s usando cache
+  setInterval(() => cargarTurnos(false), 2000);
 
-    cargarTurnos();
-  </script>
+  cargarTurnos(true);
+</script>
+
 </body>
 </html>
